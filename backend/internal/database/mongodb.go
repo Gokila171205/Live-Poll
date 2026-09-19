@@ -34,7 +34,7 @@ func ConnectMongoDB(ctx context.Context, uri, dbName string) (*MongoDB, error) {
 	defer cancel()
 
 	if err := client.Ping(pingCtx, readpref.Primary()); err != nil {
-		log.Printf("[WARN] MongoDB ping failed at startup (%s): %v", uri, err)
+		log.Printf("[WARN] MongoDB ping failed at startup: %v", err)
 		// Return the initialized client so health checks can report status and attempt reconnects
 		return &MongoDB{
 			Client:   client,

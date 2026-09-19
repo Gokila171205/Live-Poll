@@ -18,18 +18,25 @@ func CORSMiddleware(allowedOrigin string) gin.HandlerFunc {
 		}
 	}
 
-	// Always ensure localhost dev origins are allowed
-	devOrigins := []string{"http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "http://127.0.0.1:5174", "http://localhost:3000"}
-	for _, devO := range devOrigins {
+	// Always ensure standard development and production origins are allowed
+	defaultOrigins := []string{
+		"http://localhost:5173",
+		"http://localhost:5174",
+		"http://127.0.0.1:5173",
+		"http://127.0.0.1:5174",
+		"http://localhost:3000",
+		"https://live-poll-ashy.vercel.app",
+	}
+	for _, defO := range defaultOrigins {
 		found := false
 		for _, o := range origins {
-			if o == devO {
+			if o == defO {
 				found = true
 				break
 			}
 		}
 		if !found {
-			origins = append(origins, devO)
+			origins = append(origins, defO)
 		}
 	}
 

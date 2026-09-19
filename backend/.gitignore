@@ -1,0 +1,12 @@
+.env
+.env.local
+*.env
+/server
+/server.exe
+/app
+/app.exe
+*.exe
+dump.rdb
+*.rdb
+!cmd/server/
+

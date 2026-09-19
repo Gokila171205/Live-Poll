@@ -32,8 +32,11 @@ lerna-debug.log*
 *.test
 *.out
 /backend/bin/
-backend/server.exe
-backend/server
+/backend/server.exe
+/backend/server
+/app
+/backend/app
+!/backend/cmd/server/
 
 # Go dependency vendoring (if ever used)
 vendor/

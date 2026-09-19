@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -15,21 +16,41 @@ type RedisClient struct {
 }
 
 // ConnectRedis initializes a connection to Redis with short connection timeouts.
+// Supports both standard host:port and full redis:// or rediss:// connection URLs.
 func ConnectRedis(ctx context.Context, addr, password string, db int) (*RedisClient, error) {
-	client := redis.NewClient(&redis.Options{
-		Addr:         addr,
-		Password:     password,
-		DB:           db,
-		DialTimeout:  2 * time.Second,
-		ReadTimeout:  2 * time.Second,
-		WriteTimeout: 2 * time.Second,
-	})
+	var opts *redis.Options
 
-	pingCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	if strings.HasPrefix(addr, "redis://") || strings.HasPrefix(addr, "rediss://") {
+		parsedOpts, err := redis.ParseURL(addr)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse Redis connection URL: %w", err)
+		}
+		opts = parsedOpts
+		if password != "" {
+			opts.Password = password
+		}
+		if db != 0 {
+			opts.DB = db
+		}
+	} else {
+		opts = &redis.Options{
+			Addr:     addr,
+			Password: password,
+			DB:       db,
+		}
+	}
+
+	opts.DialTimeout = 3 * time.Second
+	opts.ReadTimeout = 3 * time.Second
+	opts.WriteTimeout = 3 * time.Second
+
+	client := redis.NewClient(opts)
+
+	pingCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
 	if err := client.Ping(pingCtx).Err(); err != nil {
-		log.Printf("[WARN] Redis ping failed at startup (%s): %v", addr, err)
+		log.Printf("[WARN] Redis ping failed at startup: %v", err)
 		return &RedisClient{Client: client}, err
 	}
 

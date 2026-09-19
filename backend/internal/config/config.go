@@ -41,13 +41,18 @@ func LoadConfig() *Config {
 		jwtExpHours = 24
 	}
 
+	redisAddr := getEnv("REDIS_ADDR", "")
+	if redisAddr == "" {
+		redisAddr = getEnv("REDIS_URL", "localhost:6379")
+	}
+
 	return &Config{
 		Port:               getEnv("PORT", "8080"),
 		GinMode:            getEnv("GIN_MODE", "debug"),
 		ClientOrigin:       getEnv("CLIENT_ORIGIN", "http://localhost:5173"),
 		MongoURI:           getEnv("MONGO_URI", "mongodb://localhost:27017"),
 		MongoDBName:        getEnv("MONGO_DB_NAME", "livepoll"),
-		RedisAddr:          getEnv("REDIS_ADDR", "localhost:6379"),
+		RedisAddr:          redisAddr,
 		RedisPassword:      getEnv("REDIS_PASSWORD", ""),
 		RedisDB:            redisDB,
 		JWTSecret:          getEnv("JWT_SECRET", "default_dev_secret_change_in_production"),
