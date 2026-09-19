@@ -1,6 +1,16 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 
-const WS_BASE = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8080/api'
+function getWsBase() {
+  if (import.meta.env.VITE_WS_BASE_URL) {
+    return import.meta.env.VITE_WS_BASE_URL.replace(/\/+$/, '')
+  }
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return 'ws://localhost:8080/api'
+  }
+  return 'wss://live-poll-v9go.onrender.com/api'
+}
+
+const WS_BASE = getWsBase()
 
 /**
  * Custom hook for live WebSocket subscription to a specific poll.

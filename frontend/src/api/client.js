@@ -1,4 +1,16 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
+function getApiBase() {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL.replace(/\/+$/, '')
+  }
+  // If running locally in development, default to local backend
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return 'http://localhost:8080/api'
+  }
+  // Production Render backend
+  return 'https://live-poll-v9go.onrender.com/api'
+}
+
+const API_BASE = getApiBase()
 
 /**
  * Universal fetch wrapper for LivePoll REST API.
