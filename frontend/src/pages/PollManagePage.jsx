@@ -11,9 +11,12 @@ import { Alert } from '../components/common/Alert'
 import { LoadingSpinner } from '../components/common/LoadingSpinner'
 import { ChartIcon, VoteIcon, TrashIcon, ExternalLinkIcon, QrCodeIcon } from '../components/icons/Icons'
 import { useAuth } from '../hooks/useAuth'
+import { getPollShareUrl, getPollResultsUrl } from '../utils/url'
 
 export function PollManagePage() {
-  const { id } = useParams()
+  const { id, pollId } = useParams()
+  const effectiveId = id || pollId
+
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useAuth()
@@ -27,31 +30,32 @@ export function PollManagePage() {
   const [showQrModal, setShowQrModal] = useState(false)
 
   // Real-time live updates
-  const { liveData, status: wsStatus, lastUpdated } = useLivePoll(id)
+  const { liveData, status: wsStatus, lastUpdated } = useLivePoll(effectiveId)
 
   const fetchPollDetails = useCallback(async () => {
+    if (!effectiveId) return
     setLoading(true)
     setError(null)
     try {
-      const data = await pollsApi.getPoll(id)
+      const data = await pollsApi.getPoll(effectiveId)
       setPoll(data)
     } catch (err) {
       setError(err.message || 'Failed to load poll details.')
     } finally {
       setLoading(false)
     }
-  }, [id])
+  }, [effectiveId])
 
   useEffect(() => {
     fetchPollDetails()
   }, [fetchPollDetails])
 
   const handleToggleStatus = async () => {
-    if (!poll || statusUpdating) return
+    if (!poll || statusUpdating || !effectiveId) return
     setStatusUpdating(true)
     try {
       const nextStatus = !poll.isActive
-      await pollsApi.setPollStatus(id, nextStatus)
+      await pollsApi.setPollStatus(effectiveId, nextStatus)
       setPoll((prev) => ({ ...prev, isActive: nextStatus }))
       setSuccessMsg(`Poll status successfully updated to ${nextStatus ? 'Active (Open)' : 'Closed'}.`)
     } catch (err) {
@@ -68,7 +72,7 @@ export function PollManagePage() {
 
     setDeleting(true)
     try {
-      await pollsApi.deletePoll(id)
+      await pollsApi.deletePoll(effectiveId)
       navigate('/dashboard')
     } catch (err) {
       alert(`Failed to delete poll: ${err.message}`)
@@ -106,32 +110,23 @@ export function PollManagePage() {
       <div className="page-center-container">
         <div className="error-panel glass-panel text-center max-w-md">
           <h2>Access Denied</h2>
-          <p className="text-muted mt-8 mb-20">
-            You do not have permission to manage this poll. Only the poll creator can access management controls.
-          </p>
-          <div className="flex gap-12 justify-center">
-            <Link to={`/polls/${id}`}>
-              <Button variant="outline" size="sm">
-                Vote on Poll
-              </Button>
-            </Link>
-            <Link to="/dashboard">
-              <Button variant="primary" size="sm">
-                Go to My Dashboard
-              </Button>
-            </Link>
-          </div>
+          <p className="text-muted mt-8 mb-20">You do not have permission to manage this poll.</p>
+          <Link to="/dashboard">
+            <Button variant="primary" size="sm">
+              Go to My Dashboard
+            </Button>
+          </Link>
         </div>
       </div>
     )
   }
 
-  const shareUrl = `${window.location.origin}/polls/${id}`
-  const resultsUrl = `${window.location.origin}/polls/${id}/results`
+  const shareUrl = getPollShareUrl(effectiveId)
+  const resultsUrl = getPollResultsUrl(effectiveId)
 
   // Combine live data with poll metadata
   const currentResults = liveData || {
-    pollId: id,
+    pollId: effectiveId,
     question: poll.question,
     isActive: poll.isActive,
     totalVotes: poll.options?.reduce((sum, o) => sum + (o.voteCount || 0), 0) || 0,
@@ -199,16 +194,16 @@ export function PollManagePage() {
             Show QR Code
           </Button>
           <CopyButton text={shareUrl} label="Copy Vote Link" size="md" />
-          <Link to={`/polls/${id}`} target="_blank" rel="noopener noreferrer">
+          <Link to={`/poll/${effectiveId}`} target="_blank" rel="noopener noreferrer">
             <Button variant="outline" size="md" icon={<VoteIcon size={16} />}>
               Test Vote Page <ExternalLinkIcon size={14} />
             </Button>
           </Link>
-          <Link to={`/polls/${id}/results`} target="_blank" rel="noopener noreferrer">
+          <a href={resultsUrl} target="_blank" rel="noopener noreferrer">
             <Button variant="primary" size="md" icon={<ChartIcon size={16} />}>
               Full Screen Stream <ExternalLinkIcon size={14} />
             </Button>
-          </Link>
+          </a>
         </div>
       </div>
 

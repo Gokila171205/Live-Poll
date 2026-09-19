@@ -6,23 +6,27 @@ import { PollResultCard } from '../components/poll/PollResultCard'
 import { LoadingSpinner } from '../components/common/LoadingSpinner'
 import { Button } from '../components/common/Button'
 import { VoteIcon, ExternalLinkIcon, RadioIcon } from '../components/icons/Icons'
+import { getPollShareUrl } from '../utils/url'
 
 export function LiveResultsPage() {
-  const { id } = useParams()
+  const { id, pollId } = useParams()
+  const effectiveId = id || pollId
+
   const [initialPoll, setInitialPoll] = useState(null)
   const [initialLoading, setInitialLoading] = useState(true)
   const [initialError, setInitialError] = useState(null)
   const [showLogs, setShowLogs] = useState(false)
 
   // Real-time WebSocket hook
-  const { liveData, status: wsStatus, lastUpdated, logs } = useLivePoll(id)
+  const { liveData, status: wsStatus, lastUpdated, logs } = useLivePoll(effectiveId)
 
   // Fetch initial poll metadata once to ensure clean render if WebSocket takes a moment
   useEffect(() => {
+    if (!effectiveId) return
     async function loadPoll() {
       setInitialLoading(true)
       try {
-        const poll = await pollsApi.getPoll(id)
+        const poll = await pollsApi.getPoll(effectiveId)
         setInitialPoll(poll)
       } catch (err) {
         setInitialError(err.message || 'Poll not found.')
@@ -31,7 +35,7 @@ export function LiveResultsPage() {
       }
     }
     loadPoll()
-  }, [id])
+  }, [effectiveId])
 
   if (initialLoading && !liveData) {
     return (
@@ -59,7 +63,7 @@ export function LiveResultsPage() {
 
   // Combine initial poll metadata with live WebSocket results
   const resultsData = liveData || {
-    pollId: id,
+    pollId: effectiveId,
     question: initialPoll?.question || 'Live Poll',
     isActive: initialPoll?.isActive ?? true,
     totalVotes: initialPoll?.options?.reduce((sum, o) => sum + (o.voteCount || 0), 0) || 0,
@@ -71,15 +75,13 @@ export function LiveResultsPage() {
     })) || [],
   }
 
-  const voteUrl = `${window.location.origin}/polls/${id}`
-
   return (
     <div className="live-results-page-container">
       {/* Top Banner with live stream status */}
       <div className="live-stream-banner-row">
         <div className="live-channel-indicator">
           <RadioIcon size={18} />
-          <span>Channel: <code>poll:events:{id.substring(0, 8)}...</code></span>
+          <span>Channel: <code>poll:events:{effectiveId ? effectiveId.substring(0, 8) : ''}...</code></span>
         </div>
 
         <div className="live-banner-actions">
@@ -91,7 +93,7 @@ export function LiveResultsPage() {
             {showLogs ? 'Hide Stream Log' : `Show Stream Log (${logs.length})`}
           </button>
 
-          <Link to={`/polls/${id}`} target="_blank" rel="noopener noreferrer" className="open-vote-btn">
+          <Link to={`/poll/${effectiveId}`} target="_blank" rel="noopener noreferrer" className="open-vote-btn">
             <VoteIcon size={16} />
             <span>Open Audience Vote Page</span>
             <ExternalLinkIcon size={14} />

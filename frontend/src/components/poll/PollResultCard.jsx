@@ -5,6 +5,7 @@ import { Button } from '../common/Button'
 import { QRCodeModal } from '../common/QRCodeModal'
 import { VoteIcon, ExternalLinkIcon, QrCodeIcon } from '../icons/Icons'
 import { PollFlowLogo } from '../common/PollFlowLogo'
+import { getPollShareUrl } from '../../utils/url'
 
 export function PollResultCard({
   results,
@@ -18,7 +19,7 @@ export function PollResultCard({
   if (!results) return null
 
   const targetPollId = pollId || results.pollId
-  const shareUrl = `${window.location.origin}/polls/${targetPollId}`
+  const shareUrl = getPollShareUrl(targetPollId)
   const totalVotes = results.totalVotes || 0
 
   // Calculate highest vote count to highlight leading option

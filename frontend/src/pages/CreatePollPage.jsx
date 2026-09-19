@@ -17,6 +17,7 @@ import {
   VoteIcon,
 } from '../components/icons/Icons'
 import { PollFlowLogo } from '../components/common/PollFlowLogo'
+import { getPollShareUrl, getPollResultsUrl } from '../utils/url'
 
 export function CreatePollPage() {
   const navigate = useNavigate()
@@ -143,8 +144,8 @@ export function CreatePollPage() {
   // Show polished success state after poll creation
   // ====================================================================
   if (createdPollData) {
-    const pollShareUrl = `${window.location.origin}/polls/${createdPollData.id}`
-    const resultsUrl = `${window.location.origin}/polls/${createdPollData.id}/results`
+    const pollShareUrl = getPollShareUrl(createdPollData.id)
+    const resultsUrl = getPollResultsUrl(createdPollData.id)
 
     return (
       <div className="create-success-page-shell">

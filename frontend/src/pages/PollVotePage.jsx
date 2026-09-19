@@ -17,7 +17,9 @@ function getOrCreateVoterId() {
 }
 
 export function PollVotePage() {
-  const { id } = useParams()
+  const { id, pollId } = useParams()
+  const effectiveId = id || pollId
+
   const [poll, setPoll] = useState(null)
   const [loading, setLoading] = useState(true)
   const [voting, setVoting] = useState(false)
@@ -28,32 +30,34 @@ export function PollVotePage() {
 
   // Check if voter already casted a vote for this poll locally
   useEffect(() => {
+    if (!effectiveId) return
     const votedMap = JSON.parse(localStorage.getItem('livepoll_voted_polls') || '{}')
-    if (votedMap[id]) {
+    if (votedMap[effectiveId]) {
       setHasVoted(true)
-      setVotedOptionId(votedMap[id])
+      setVotedOptionId(votedMap[effectiveId])
     }
-  }, [id])
+  }, [effectiveId])
 
   const fetchPoll = useCallback(async () => {
+    if (!effectiveId) return
     setLoading(true)
     setError(null)
     try {
-      const data = await pollsApi.getPoll(id)
+      const data = await pollsApi.getPoll(effectiveId)
       setPoll(data)
     } catch (err) {
       setError(err.message || 'Poll could not be found or has expired.')
     } finally {
       setLoading(false)
     }
-  }, [id])
+  }, [effectiveId])
 
   useEffect(() => {
     fetchPoll()
   }, [fetchPoll])
 
   const handleVote = async (optionId) => {
-    if (!poll || voting || hasVoted) return
+    if (!poll || voting || hasVoted || !effectiveId) return
 
     setVoting(true)
     setVoteError(null)
@@ -61,11 +65,11 @@ export function PollVotePage() {
     const voterId = getOrCreateVoterId()
 
     try {
-      await pollsApi.vote(id, optionId, voterId)
+      await pollsApi.vote(effectiveId, optionId, voterId)
       
       // Save local vote record
       const votedMap = JSON.parse(localStorage.getItem('livepoll_voted_polls') || '{}')
-      votedMap[id] = optionId
+      votedMap[effectiveId] = optionId
       localStorage.setItem('livepoll_voted_polls', JSON.stringify(votedMap))
 
       setHasVoted(true)
@@ -86,9 +90,11 @@ export function PollVotePage() {
   const handleResetSession = () => {
     const newVoter = 'voter_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now().toString(36)
     localStorage.setItem('livepoll_voter_id', newVoter)
-    const votedMap = JSON.parse(localStorage.getItem('livepoll_voted_polls') || '{}')
-    delete votedMap[id]
-    localStorage.setItem('livepoll_voted_polls', JSON.stringify(votedMap))
+    if (effectiveId) {
+      const votedMap = JSON.parse(localStorage.getItem('livepoll_voted_polls') || '{}')
+      delete votedMap[effectiveId]
+      localStorage.setItem('livepoll_voted_polls', JSON.stringify(votedMap))
+    }
     setHasVoted(false)
     setVotedOptionId(null)
     setVoteError(null)

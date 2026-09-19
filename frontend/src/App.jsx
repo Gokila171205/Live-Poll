@@ -59,14 +59,23 @@ export default function App() {
 
           {/* 6. Poll voting page (Public Audience) */}
           <Route path="/polls/:id" element={<PollVotePage />} />
+          <Route path="/polls/:pollId" element={<PollVotePage />} />
           <Route path="/polls/:id/vote" element={<PollVotePage />} />
+          <Route path="/polls/:pollId/vote" element={<PollVotePage />} />
           <Route path="/poll/:id" element={<PollVotePage />} />
+          <Route path="/poll/:pollId" element={<PollVotePage />} />
+          <Route path="/poll/:id/vote" element={<PollVotePage />} />
+          <Route path="/poll/:pollId/vote" element={<PollVotePage />} />
           <Route path="/vote/:id" element={<PollVotePage />} />
+          <Route path="/vote/:pollId" element={<PollVotePage />} />
 
           {/* 7. Live results page (Public Presenter / Stream) */}
           <Route path="/polls/:id/results" element={<LiveResultsPage />} />
+          <Route path="/polls/:pollId/results" element={<LiveResultsPage />} />
           <Route path="/poll/:id/results" element={<LiveResultsPage />} />
+          <Route path="/poll/:pollId/results" element={<LiveResultsPage />} />
           <Route path="/results/:id" element={<LiveResultsPage />} />
+          <Route path="/results/:pollId" element={<LiveResultsPage />} />
 
           {/* 8. Poll management / details page (Protected) */}
           <Route
@@ -78,7 +87,39 @@ export default function App() {
             }
           />
           <Route
+            path="/polls/:pollId/manage"
+            element={
+              <ProtectedRoute>
+                <PollManagePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/poll/:id/manage"
+            element={
+              <ProtectedRoute>
+                <PollManagePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/poll/:pollId/manage"
+            element={
+              <ProtectedRoute>
+                <PollManagePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/manage/:id"
+            element={
+              <ProtectedRoute>
+                <PollManagePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manage/:pollId"
             element={
               <ProtectedRoute>
                 <PollManagePage />

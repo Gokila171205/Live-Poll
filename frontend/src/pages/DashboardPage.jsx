@@ -8,6 +8,7 @@ import { QRCodeModal } from '../components/common/QRCodeModal'
 import { Alert } from '../components/common/Alert'
 import { LoadingSpinner } from '../components/common/LoadingSpinner'
 import { PollFlowLogo } from '../components/common/PollFlowLogo'
+import { getPollShareUrl } from '../utils/url'
 import {
   PlusIcon,
   ChartIcon,
@@ -60,7 +61,7 @@ export function DashboardPage() {
       if (err.status === 401) {
         setError('Your session has expired. Please sign in again.')
       } else if (err.message && err.message.toLowerCase().includes('network connection error')) {
-        setError('Unable to reach the LivePoll backend server at http://localhost:8080. Please ensure the backend is running.')
+        setError('Unable to reach the LivePoll backend server. Please ensure the backend is running.')
       } else {
         setError(err.message || 'Failed to load polls.')
       }
@@ -73,29 +74,22 @@ export function DashboardPage() {
     fetchPolls()
   }, [fetchPolls])
 
-  const handleToggleStatus = async (poll) => {
-    const action = poll.isActive ? 'close' : 'reopen'
-    const confirmMsg = poll.isActive
-      ? 'Are you sure you want to close this poll? Audience members will no longer be able to submit votes.'
-      : 'Are you sure you want to reopen this poll for voting?'
-
-    if (!window.confirm(confirmMsg)) return
-
-    setTogglingId(poll.id)
+  const handleToggleStatus = async (pollId, currentStatus) => {
+    setTogglingId(pollId)
     try {
-      await pollsApi.setPollStatus(poll.id, !poll.isActive)
+      await pollsApi.setPollStatus(pollId, !currentStatus)
       setPolls((prev) =>
-        prev.map((p) => (p.id === poll.id ? { ...p, isActive: !p.isActive } : p))
+        prev.map((p) => (p.id === pollId ? { ...p, isActive: !currentStatus } : p))
       )
     } catch (err) {
-      alert(`Failed to ${action} poll: ${err.message}`)
+      alert(`Failed to update poll status: ${err.message}`)
     } finally {
       setTogglingId(null)
     }
   }
 
   const handleDelete = async (pollId) => {
-    if (!window.confirm('Are you sure you want to delete this poll? All recorded votes will be removed.')) {
+    if (!window.confirm('Are you sure you want to delete this poll? This action cannot be undone.')) {
       return
     }
 
@@ -111,7 +105,7 @@ export function DashboardPage() {
   }
 
   const handleCopyLink = async (pollId) => {
-    const url = `${window.location.origin}/polls/${pollId}`
+    const url = getPollShareUrl(pollId)
     try {
       await navigator.clipboard.writeText(url)
       setCopiedPollId(pollId)
@@ -552,7 +546,7 @@ export function DashboardPage() {
                       {filteredAndSortedPolls.map((poll) => {
                         const pollVotes =
                           poll.options?.reduce((sum, o) => sum + (o.voteCount || 0), 0) || 0
-                        const shareUrl = `${window.location.origin}/polls/${poll.id}`
+                        const shareUrl = getPollShareUrl(poll.id)
                         const formattedDate = poll.createdAt
                           ? new Date(poll.createdAt).toLocaleDateString(undefined, {
                               month: 'short',
@@ -694,7 +688,7 @@ export function DashboardPage() {
                   {filteredAndSortedPolls.map((poll) => {
                     const pollVotes =
                       poll.options?.reduce((sum, o) => sum + (o.voteCount || 0), 0) || 0
-                    const shareUrl = `${window.location.origin}/polls/${poll.id}`
+                    const shareUrl = getPollShareUrl(poll.id)
                     const formattedDate = poll.createdAt
                       ? new Date(poll.createdAt).toLocaleDateString(undefined, {
                           month: 'short',
