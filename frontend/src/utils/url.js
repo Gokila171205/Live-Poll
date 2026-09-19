@@ -10,7 +10,11 @@ export function getFrontendBaseUrl() {
     return envUrl.replace(/\/+$/, '')
   }
   if (typeof window !== 'undefined' && window.location?.origin) {
-    return window.location.origin
+    // If running on localhost or 127.0.0.1, external devices (like phones scanning QR codes)
+    // cannot reach localhost. Direct them to the live production Vercel app.
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      return window.location.origin
+    }
   }
   return 'https://live-poll-ashy.vercel.app'
 }

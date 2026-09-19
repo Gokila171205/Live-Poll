@@ -24,6 +24,9 @@ export async function apiClient(endpoint, options = {}) {
   try {
     response = await fetch(url, config)
   } catch (netErr) {
+    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && url.includes('localhost:8080')) {
+      throw new Error(`Unable to reach backend: The app is trying to connect to "${url}", which is unreachable from an external device. Please set VITE_API_BASE_URL to your deployed Render backend URL in your Vercel project settings.`)
+    }
     throw new Error(`Network connection error: ${netErr.message}`)
   }
 

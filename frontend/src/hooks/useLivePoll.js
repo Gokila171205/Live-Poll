@@ -39,7 +39,11 @@ export function useLivePoll(pollId) {
       }
 
       setStatus('connecting')
-      const wsUrl = `${WS_BASE}/polls/${pollId}/live`
+      let effectiveWsBase = WS_BASE
+      if (typeof window !== 'undefined' && window.location.protocol === 'https:' && effectiveWsBase.startsWith('ws://')) {
+        effectiveWsBase = effectiveWsBase.replace(/^ws:\/\//, 'wss://')
+      }
+      const wsUrl = `${effectiveWsBase}/polls/${pollId}/live`
       
       try {
         const ws = new WebSocket(wsUrl)
